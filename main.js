@@ -204,24 +204,6 @@ const grokData = function( pathObj )
                 return readDirectoryData( pathObj.full );
         }
     }
-    // return;
-    // try 
-    // {   
-    //     // It's a directory 
-    //     return readDirectoryData( pathObj.full );
-    // }
-    // catch( err )
-    // {   
-    //     // It's a file
-    //     console.warn( "Attempted to read file as directory.");
-    //     var thisIndex = determineIndex( pathObj.root, pathObj.file );
-    //     console.log( thisIndex )
-
-    //     return getFileDataSync( thisIndex );
-    //     // return getFileDataSync(
-    //     //     determineIndex( absoluteSystemPath )
-    //     // );
-    // }
 }
 
 var server = http.createServer(function ( req, res ) {
