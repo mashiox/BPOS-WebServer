@@ -153,9 +153,7 @@ const determineIndex = function( root, file )
         case "":
         case "/":
             const index = config.indicies.map(function( idx ){
-                return root
-                        + emitTrailingSlash( root )
-                        + idx;
+                return urlify( root, idx )
             })
             .filter(function( path ){
                 return pathExistsSync( path );
@@ -185,22 +183,45 @@ const determineIndex = function( root, file )
 // Emit the raw data. from the file or directory.
 const grokData = function( pathObj )
 {
+    var thisIndex = determineIndex( pathObj.root, pathObj.file );
     try 
-    {   
-        // It's a directory 
-        return readDirectoryData( pathObj.full );
-    }
-    catch( err )
-    {   
-        // It's a file
-        console.warn( "Attempted to read file as directory.");
-        var thisIndex = determineIndex( pathObj.root, pathObj.file );
-
+    {
         return getFileDataSync( thisIndex );
-        // return getFileDataSync(
-        //     determineIndex( absoluteSystemPath )
-        // );
     }
+    catch ( err )
+    {
+        switch ( err.code )
+        {
+            case "ENOTDOR":
+                return "404, file not found.";
+            case undefined:
+                return "XXX, file does not exist";
+            case "ENOENT":
+            case "EACCES":
+                return "503, can't read file";
+            default:
+                console.warn( "Directory found, no index.");
+                return readDirectoryData( pathObj.full );
+        }
+    }
+    // return;
+    // try 
+    // {   
+    //     // It's a directory 
+    //     return readDirectoryData( pathObj.full );
+    // }
+    // catch( err )
+    // {   
+    //     // It's a file
+    //     console.warn( "Attempted to read file as directory.");
+    //     var thisIndex = determineIndex( pathObj.root, pathObj.file );
+    //     console.log( thisIndex )
+
+    //     return getFileDataSync( thisIndex );
+    //     // return getFileDataSync(
+    //     //     determineIndex( absoluteSystemPath )
+    //     // );
+    // }
 }
 
 var server = http.createServer(function ( req, res ) {
