@@ -1,16 +1,53 @@
 const http = require( 'http' );
 const fs = require( 'fs' );
 
-var fd = fs.readFileSync( './index.html', 'utf8' );
+var config;
 
-// var fileData = fs.readFile( './index.html', 'utf8', function( err, data ){
-//     return new Promise(function( resolve, reject ){
-//         console.log( "INC filedata" );
-//         console.log( data );
-//         if ( err ) reject( err );
-//         resolve( data );
-//     });
-// });
+const pathExists = function ( path )
+{
+    return new Promise(function( resolve, reject ){
+        fs.access( path, fs.F_OK, function( err ){
+            if ( err ) reject( err );
+            resolve( true );
+        });
+    });
+}
+
+const pathExistsSync = function( path )
+{
+    try 
+    {
+        return fs.accessSync( path, fs.F_OK ) === undefined;
+    }
+    catch ( err )
+    {
+        console.error( err );
+        return false;
+    }
+}
+
+const pathReadable = function( path )
+{
+    return new Promise(function( resolve, reject ){
+        fs.access( path, fs.R_OK, function( err ){
+            if ( err ) reject( err );
+            resolve( true );
+        })
+    });
+}
+
+const pathReadableSync = function( path )
+{
+    try 
+    {
+        return fs.accessSync( path, fs.F_OK ) === undefined;
+    }
+    catch ( err )
+    {
+        console.error( err );
+        return false;
+    }
+}
 
 const getFileData = function( path, encoding )
 {
@@ -34,20 +71,53 @@ const parsePath = function( url )
 }
 
 var server = http.createServer(function ( req, res ) {
-    console.log( req.url );
 
-    var pathData = parsePath( req.url );
-    getFileData( pathData.pathname )
-    .then(function( fileData ){
-        res.writeHead( 200, { 'Content-Type': 'text/html' } );
-        res.end( fd );
-    })
-    .catch(function( err ){
-        console.log("error")
-    });
+    if ( config )
+    {
+        var loadFile;
+        var pathData = parsePath( req.url );
+        
+        switch ( pathData.href )
+        {
+            case "":
+            case "/":
+                const index = config.indicies.map(function(index){
+                    return config.root
+                           + ( config.root[config.root.length-1] === "/" ? "" : "/" )
+                           + index;
+                })
+                .filter(function( path ){
+                    return pathExistsSync( path );
+                })
+                .filter(function( path ){
+                    return pathReadableSync( path );
+                })
+                if ( !index.length )
+                {
+                    res.end("couldnt load");
+                }
+                loadFile = index[0];
+
+            break;
+        }
+        
+
+        getFileData( loadFile )
+        .then(function( fileData ){
+            res.writeHead( 200, { 'Content-Type': 'text/html' } );
+            res.end( fileData );
+        })
+        .catch(function( err ){
+            console.log( err );
+        });
+    }
 
 });
 
  server.listen( 8080, function(){
     console.log("listening...")
+    const cfg = JSON.parse(
+        fs.readFileSync( './bpos-config.json' )
+    );
+    config = Object.assign( {}, cfg );
 });
