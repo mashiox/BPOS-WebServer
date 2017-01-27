@@ -211,13 +211,17 @@ var server = http.createServer(function ( req, res ) {
     if ( config )
     {
         var pathData = parsePath( req.url );
+        console.log( pathData );
 
-        const fullSystemPath = urlify( config.root, pathData.href );
+        const fullSystemPath = urlify( config.root, pathData.pathname );
         const pathObj = {
-            full: urlify( config.root, pathData.href ),
+            full: urlify( config.root, pathData.pathname ),
             root: config.root,
-            file: pathData.href
+            file: pathData.pathname,
+            query: Object.assign( {}, pathData.query )
         };
+        // TODO need to catch the mime type of the file.
+        // and use that in the content type.
 
         var fileData = grokData( pathObj );
 
