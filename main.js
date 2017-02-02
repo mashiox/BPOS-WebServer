@@ -3,7 +3,8 @@ const fs = require( 'fs' );
 
 const BPOS = {
     strOps: require( './strOps.js' ),
-    fileOps: require( './fileOps.js' )
+    fileOps: require( './fileOps.js' ),
+    mime:       require( 'mime' )
 }
 
 var config;
@@ -53,7 +54,7 @@ const grokData = function( pathObj )
     console.log( thisIndex );
     try 
     {
-        return BPOS.fileOps.getFileDataSync( thisIndex );
+        return [ BPOS.fileOps.getFileDataSync( thisIndex ), BPOS.mime.lookup( thisIndex ) ];
     }
     catch ( err )
     {
@@ -62,13 +63,13 @@ const grokData = function( pathObj )
         {
             case undefined:
             case "ENOTDOR":
-                return "404, Resource Not Found";
+                return [ "404, Resource Not Found", "text/html" ];
             case "ENOENT":
             case "EACCES":
-                return "403, Unauthorized Access";
+                return [ "403, Unauthorized Access", "text/html" ];
             default:
                 console.warn( "Directory found, no index.");
-                return readDirectoryData( pathObj.full );
+                return [ readDirectoryData( pathObj.full ), "text/html" ];
         }
     }
 }
@@ -92,8 +93,8 @@ var server = http.createServer(function ( req, res ) {
 
         var fileData = grokData( pathObj );
 
-        res.writeHead( 200, { 'Content-Type': 'text/html' } );
-        res.end( fileData );
+        res.writeHead( 200, { 'Content-Type': fileData[1] } );
+        res.end( fileData[0] );
 
     }
 
